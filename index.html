@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Molduras — Setembro Amarelo | CIEP 183 João Vitta</title>
+  <meta name="description" content="Aplicativo simples para tirar fotos com molduras do Setembro Amarelo. Nenhuma digitação, só câmera e download." />
+  <style>
+    :root{
+      --bg:#0f1115; --panel:#151924; --panel-2:#0d1017; --brand:#ffd200; --brand-2:#ffef8a; --text:#e8e8ea; --muted:#9aa3b2;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body{margin:0; background:radial-gradient(1200px 600px at 10% -10%, #1a2030, transparent),
+          radial-gradient(900px 500px at 110% 10%, #1b1407, transparent), var(--bg); color:var(--text);
+          font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;}
+    .wrap{max-width:1100px;margin:24px auto;padding:16px}
+    .title{display:flex;gap:12px;align-items:center}
+    .badge{background:var(--brand);color:#111;padding:4px 10px;border-radius:999px;font-weight:700;letter-spacing:.2px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:16px}
+    @media (max-width: 960px){.grid{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid #23283a; border-radius:18px; box-shadow:0 10px 30px #0006}
+    .panel{padding:14px}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    button{appearance:none; border:1px solid #2a3044; background:#1a1f2e; color:var(--text); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600}
+    button:hover{border-color:#39425f}
+    button.primary{background:var(--brand); color:#111; border-color:#c9aa00}
+    button.ghost{background:transparent}
+    button:disabled{opacity:.6; cursor:not-allowed}
+    .video-wrap{position:relative; aspect-ratio:4/3; background:#000; border-radius:16px; overflow:hidden;}
+    video, canvas, .overlay{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+    video{transform:scaleX(-1)} /* espelho para selfie */
+    .thumbs{display:flex; gap:10px; overflow:auto; padding:8px 4px}
+    .thumb{min-width:84px; border:2px solid #2a3044; border-radius:12px; padding:6px; cursor:pointer; user-select:none; background:#0f1320}
+    .thumb.active{border-color:var(--brand)}
+    .hint{font-size:.9rem; color:var(--muted)}
+    .footer{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:6px}
+    .logo{display:flex;align-items:center;gap:8px}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--brand);box-shadow:0 0 20px var(--brand)}
+    .hidden{display:none}
+    .countdown{position:absolute; inset:0; display:grid; place-items:center; font-size:64px; font-weight:800; text-shadow:0 8px 32px #000a}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">
+      <div class="badge">Setembro Amarelo</div>
+      <h1 style="margin:0">Molduras para Foto — CIEP 183 João Vitta</h1>
+    </div>
+    <p class="hint" style="margin:6px 0 18px">Sem digitar nada. Só escolher a moldura, ligar a câmera e baixar sua foto. Privado: nada é enviado para servidores.</p>
+
+    <div class="grid">
+      <!-- COLUNA ESQUERDA: PRÉVIA E AÇÃO -->
+      <div class="card panel">
+        <div class="video-wrap">
+          <video id="preview" autoplay playsinline muted></video>
+          <div id="overlay" class="overlay"></div>
+          <div id="countdown" class="countdown hidden"></div>
+          <canvas id="canvas" class="hidden"></canvas>
+        </div>
+        <div class="controls">
+          <button id="btnStart" class="primary">Ligar câmera</button>
+          <button id="btnFlip">Virar câmera</button>
+          <button id="btnTimer" class="ghost">Timer 3s</button>
+          <button id="btnShot">Tirar foto</button>
+          <button id="btnRetake" class="ghost hidden">Refazer</button>
+          <a id="btnDownload" class="hidden" download>Baixar PNG</a>
+        </div>
+        <div class="footer hint">
+          <div class="logo"><span class="dot"></span> Campanha de valorização da vida</div>
+          <div>Funciona offline, local no seu navegador.</div>
+        </div>
+      </div>
+
+      <!-- COLUNA DIREITA: MOLDURAS -->
+      <div class="card panel">
+        <h2 style="margin-top:6px">Escolha a moldura</h2>
+        <div id="thumbs" class="thumbs"></div>
+        <p class="hint">Dica: depois de baixar, você pode compartilhar no grupo da turma. Se estiver em computador sem câmera, dá para enviar uma foto existente: arraste e solte na prévia.</p>
+      </div>
+    </div>
+
+    <p class="hint" style="margin-top:18px">Ao usar, você concorda em pedir autorização da pessoa na foto. Em caso de crise: 188 (CVV) • <a href="https://cvv.org.br/" target="_blank" rel="noopener">cvv.org.br</a></p>
+  </div>
+
+  <script>
+    // ============================ CONFIGURAÇÃO DE MOLDURAS (SVG) ============================
+    // Cada moldura é um SVG em 4:3 (1280x960). Desenhos ficam por cima da foto no download.
+    const FRAME_SIZE = { w: 1280, h: 960 };
+
+    const todayText = () => {
+      const d = new Date();
+      const pad = n => String(n).padStart(2,'0');
+      return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+    }
+
+    const frames = [
+      {
+        id: 'classica-fita', name: 'Clássica + Fita',
+        svg: (stamp) => `<?xml version="1.0"?><svg xmlns='http://www.w3.org/2000/svg' width='1280' height='960' viewBox='0 0 1280 960'>
+          <defs>
+            <linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+              <stop offset='0' stop-color='#ffed7a'/>
+              <stop offset='1' stop-color='#ffc400'/>
+            </linearGradient>
+            <filter id='shadow' x='-20%' y='-20%' width='140%' height='140%'>
+              <feDropShadow dx='0' dy='2' stdDeviation='6' flood-color='#000' flood-opacity='.6'/>
+            </filter>
+          </defs>
+          <!-- Borda -->
+          <rect x='16' y='16' width='1248' height='928' rx='36' ry='36' fill='none' stroke='url(#g)' stroke-width='28'/>
+          <!-- Faixa superior -->
+          <rect x='0' y='0' width='1280' height='96' fill='rgba(0,0,0,.45)'/>
+          <text x='40' y='62' font-family='Segoe UI, Arial' font-size='44' font-weight='700' fill='#ffde55'>Setembro Amarelo — Valorize a Vida</text>
+          <text x='1240' y='62' text-anchor='end' font-family='Segoe UI, Arial' font-size='30' fill='#ffffffcc'>${stamp}</text>
+          <!-- Laço amarelo -->
+          <g transform='translate(1030,620) scale(2.4)' filter='url(#shadow)'>
+            <path d='M54 10c-12 0-22 10-22 22 0 13 18 28 22 32 4-4 22-19 22-32 0-12-10-22-22-22z' fill='#ffd200'/>
+            <path d='M32 44c15 12 24 42 24 42s9-30 24-42c-7 3-16 3-24 10-8-7-17-7-24-10z' fill='#e6b800'/>
+          </g>
+          <!-- Rodapé -->
+          <rect x='0' y='880' width='1280' height='80' fill='rgba(0,0,0,.45)'/>
+          <text x='40' y='930' font-family='Segoe UI, Arial' font-size='32' fill='#ffffffcc'>CIEP 183 João Vitta</text>
+        </svg>`
+      },
+      {
+        id: 'polaroid', name: 'Polaroid Escolar',
+        svg: (stamp) => `<?xml version="1.0"?><svg xmlns='http://www.w3.org/2000/svg' width='1280' height='960' viewBox='0 0 1280 960'>
+          <defs>
+            <filter id='s' x='-20%' y='-20%' width='140%' height='140%'>
+              <feDropShadow dx='0' dy='14' stdDeviation='14' flood-color='#000' flood-opacity='.5'/>
+            </filter>
+          </defs>
+          <rect x='220' y='80' width='840' height='800' rx='16' fill='#fff' filter='url(#s)'/>
+          <rect x='260' y='120' width='760' height='620' fill='#000' opacity='.18'/>
+          <rect x='260' y='120' width='760' height='620' fill='none' stroke='#ffd200' stroke-width='14'/>
+          <text x='640' y='810' text-anchor='middle' font-family='Segoe UI, Arial' font-size='42' font-weight='700' fill='#222'>CIEP 183 João Vitta</text>
+          <text x='640' y='860' text-anchor='middle' font-family='Segoe UI, Arial' font-size='28' fill='#555'>Setembro Amarelo • ${stamp}</text>
+        </svg>`
+      },
+      {
+        id: 'selo-minimal', name: 'Selo Minimal',
+        svg: (stamp) => `<?xml version="1.0"?><svg xmlns='http://www.w3.org/2000/svg' width='1280' height='960' viewBox='0 0 1280 960'>
+          <circle cx='1160' cy='120' r='82' fill='#ffd200'/>
+          <text x='1160' y='106' text-anchor='middle' font-family='Segoe UI, Arial' font-size='34' font-weight='800' fill='#1a1a1a'>VIVA</text>
+          <text x='1160' y='136' text-anchor='middle' font-family='Segoe UI, Arial' font-size='22' fill='#1a1a1a'>SETEMBRO</text>
+          <rect x='32' y='32' width='1216' height='896' rx='24' fill='none' stroke='#ffd200' stroke-width='20'/>
+          <rect x='0' y='880' width='1280' height='80' fill='rgba(0,0,0,.5)'/>
+          <text x='40' y='930' font-family='Segoe UI, Arial' font-size='30' fill='#fff'>CIEP 183 João Vitta • ${stamp}</text>
+        </svg>`
+      }
+    ];
+
+    // ============================ ELEMENTOS ============================
+    const video = document.getElementById('preview');
+    const overlay = document.getElementById('overlay');
+    const canvas = document.getElementById('canvas');
+    const thumbs = document.getElementById('thumbs');
+    const btnStart = document.getElementById('btnStart');
+    const btnFlip = document.getElementById('btnFlip');
+    const btnShot = document.getElementById('btnShot');
+    const btnRetake = document.getElementById('btnRetake');
+    const btnDownload = document.getElementById('btnDownload');
+    const btnTimer = document.getElementById('btnTimer');
+    const countdown = document.getElementById('countdown');
+
+    let currentFrame = 0;
+    let usingTimer = false;
+    let currentStream = null;
+    let facing = 'user'; // user | environment
+
+    // ============================ UI INICIAL ============================
+    function renderThumbs(){
+      thumbs.innerHTML = '';
+      frames.forEach((f, i)=>{
+        const el = document.createElement('button');
+        el.className = 'thumb' + (i===currentFrame? ' active':'');
+        el.innerHTML = `<div style="width:64px;height:48px;background:#111;border-radius:8px;position:relative;overflow:hidden;margin-bottom:6px">
+          <div style="position:absolute;inset:0;border:4px solid #ffd200;border-radius:10px"></div>
+        </div><div style="font-size:.85rem">${f.name}</div>`;
+        el.onclick = ()=>{currentFrame = i; renderThumbs(); updateOverlaySVG();}
+        thumbs.appendChild(el);
+      })
+    }
+
+    function updateOverlaySVG(){
+      const svg = frames[currentFrame].svg(todayText());
+      overlay.innerHTML = svg;
+    }
+
+    renderThumbs();
+    updateOverlaySVG();
+
+    // ============================ CÂMERA ============================
+    async function startCamera(){
+      try{
+        if(currentStream){ currentStream.getTracks().forEach(t=>t.stop()); }
+        const constraints = { video: { facingMode: { ideal: facing }, width:{ideal:1280}, height:{ideal:960} }, audio:false };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        video.srcObject = stream;
+        video.classList.remove('hidden');
+        canvas.classList.add('hidden');
+        btnRetake.classList.add('hidden');
+        btnDownload.classList.add('hidden');
+      }catch(err){
+        alert('Não consegui acessar a câmera. Verifique as permissões do navegador.\n' + err);
+      }
+    }
+
+    btnStart.onclick = startCamera;
+
+    btnFlip.onclick = async ()=>{ facing = (facing==='user'?'environment':'user'); await startCamera(); }
+
+    // ============================ TIMER ============================
+    btnTimer.onclick = ()=>{
+      usingTimer = !usingTimer;
+      btnTimer.textContent = usingTimer ? 'Timer ON (3s)' : 'Timer 3s';
+    }
+
+    // ============================ CAPTURAR FOTO ============================
+    function drawSVGOnCanvas(ctx, svgString){
+      return new Promise((resolve)=>{
+        const img = new Image();
+        img.onload = ()=>{ ctx.drawImage(img, 0, 0, FRAME_SIZE.w, FRAME_SIZE.h); resolve(); };
+        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+      });
+    }
+
+    async function takeShot(){
+      // Ajustar canvas
+      const w = FRAME_SIZE.w; const h = FRAME_SIZE.h;
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      // Desenhar vídeo (espelhado na preview, mas no arquivo final vamos desespelhar)
+      ctx.save();
+      ctx.translate(w, 0); ctx.scale(-1, 1); // espelha para ficar igual ao que a pessoa vê
+      ctx.drawImage(video, 0, 0, w, h);
+      ctx.restore();
+
+      // Desenhar moldura SVG
+      await drawSVGOnCanvas(ctx, frames[currentFrame].svg(todayText()));
+
+      // Marca d'água discreta
+      ctx.font = 'bold 20px Segoe UI, Arial';
+      ctx.fillStyle = 'rgba(255,210,0,.9)';
+      ctx.textAlign = 'right';
+      ctx.fillText('Setembro Amarelo • CIEP 183 João Vitta', w - 20, h - 20);
+
+      // UI
+      video.classList.add('hidden');
+      canvas.classList.remove('hidden');
+      btnRetake.classList.remove('hidden');
+      btnDownload.classList.remove('hidden');
+
+      // Preparar download
+      const blobUrl = canvas.toDataURL('image/png');
+      const stamp = new Date();
+      const pad = n=>String(n).padStart(2,'0');
+      const name = `setembro-amarelo_${stamp.getFullYear()}-${pad(stamp.getMonth()+1)}-${pad(stamp.getDate())}_${pad(stamp.getHours())}${pad(stamp.getMinutes())}.png`;
+      btnDownload.href = blobUrl; btnDownload.textContent = 'Baixar PNG'; btnDownload.download = name;
+    }
+
+    btnShot.onclick = async ()=>{
+      if(!usingTimer){ takeShot(); return; }
+      // Timer 3s visual
+      countdown.classList.remove('hidden');
+      for(let n=3;n>0;n--){
+        countdown.textContent = n; await new Promise(r=>setTimeout(r,1000));
+      }
+      countdown.classList.add('hidden');
+      takeShot();
+    }
+
+    btnRetake.onclick = ()=>{
+      canvas.classList.add('hidden');
+      video.classList.remove('hidden');
+      btnRetake.classList.add('hidden');
+      btnDownload.classList.add('hidden');
+    }
+
+    // ============================ ARRASTAR FOTO DA GALERIA ============================
+    // Permite usar uma imagem existente se o computador não tiver câmera
+    const videoWrap = document.querySelector('.video-wrap');
+    videoWrap.addEventListener('dragover', e=>{ e.preventDefault(); videoWrap.style.outline='2px dashed #ffd200'; })
+    videoWrap.addEventListener('dragleave', e=>{ e.preventDefault(); videoWrap.style.outline='none'; })
+    videoWrap.addEventListener('drop', async e=>{
+      e.preventDefault(); videoWrap.style.outline='none';
+      const file = [...e.dataTransfer.files][0];
+      if(!file || !file.type.startsWith('image/')) return;
+      const img = new Image();
+      img.onload = async ()=>{
+        // desenhar a imagem no canvas, centralizando e cobrindo 4:3
+        const w = FRAME_SIZE.w, h = FRAME_SIZE.h; canvas.width = w; canvas.height = h; const ctx = canvas.getContext('2d');
+        // cover
+        const rImg = img.width/img.height; const rCan = w/h;
+        let dx=0, dy=0, dw=w, dh=h;
+        if(rImg>rCan){ dh=h; dw=h*rImg; dx=(w-dw)/2; } else { dw=w; dh=w/rImg; dy=(h-dh)/2; }
+        ctx.drawImage(img, dx, dy, dw, dh);
+        await drawSVGOnCanvas(ctx, frames[currentFrame].svg(todayText()));
+        ctx.font = 'bold 20px Segoe UI, Arial'; ctx.fillStyle = 'rgba(255,210,0,.9)'; ctx.textAlign = 'right';
+        ctx.fillText('Setembro Amarelo • CIEP 183 João Vitta', w - 20, h - 20);
+        video.classList.add('hidden'); canvas.classList.remove('hidden'); btnRetake.classList.remove('hidden'); btnDownload.classList.remove('hidden');
+        const blobUrl = canvas.toDataURL('image/png');
+        const stamp = new Date(); const pad = n=>String(n).padStart(2,'0');
+        const name = `setembro-amarelo_${stamp.getFullYear()}-${pad(stamp.getMonth()+1)}-${pad(stamp.getDate())}_${pad(stamp.getHours())}${pad(stamp.getMinutes())}.png`;
+        btnDownload.href = blobUrl; btnDownload.textContent = 'Baixar PNG'; btnDownload.download = name;
+      }
+      img.src = URL.createObjectURL(file);
+    });
+
+    // Sugestão: iniciar câmera automaticamente se possível
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){ /* opcional */ }
+  </script>
+</body>
+</html>
