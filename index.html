@@ -90,11 +90,19 @@
     <button data-moldura="Amarelo1.png">💛 Moldura 2</button>
     <button data-moldura="Amarelo2.png">💛 Moldura 3</button>
     <button data-moldura="Amarelo3.png">💛 Moldura 4</button>
+    <button data-moldura="Amarelo4.png">💛 Moldura 5</button>
+    <button data-moldura="Amarelo5.png">💛 Moldura 6</button>
+    <button data-moldura="Amarelo6.png">💛 Moldura 7</button>
+    <button data-moldura="Amarelo7.png">💛 Moldura 8</button>
     <button id="capturar">📸 Tirar Foto</button>
+    <button id="virarCamera">📱↔️ Virar Câmera</button>
   </div>
 
   <canvas id="canvas" style="display:none;"></canvas>
-  <img id="fotoFinal" alt="Sua Foto Aqui"/>
+  <img id="fotoFinal" alt="📸 Clique em 'Tirar Foto'"/>
+  <button id="baixarFoto" style="display:none; margin-top:10px; padding:10px 20px; background:#FFD700; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
+    ⬇️ Baixar Foto
+  </button>
 
   <script>
     const video = document.getElementById('video');
@@ -102,8 +110,9 @@
     const fotoFinal = document.getElementById('fotoFinal');
     const capturarBtn = document.getElementById('capturar');
     const molduraDiv = document.getElementById('moldura');
+    const baixarBtn = document.getElementById('baixarFoto');
 
-    let molduraAtual = 'moldura1.png';
+    let molduraAtual = 'Amarelo.png';
 
     // Acessar a câmera
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -137,8 +146,44 @@
       moldura.onload = () => {
         ctx.drawImage(moldura, 0, 0, canvas.width, canvas.height);
         fotoFinal.src = canvas.toDataURL('image/png');
+        baixarBtn.style.display = 'block'; // Mostra botão de download
       };
     });
+
+    // Botão de download
+    baixarBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = fotoFinal.src;
+      link.download = 'setembro-amarelo-foto.png';
+      link.click();
+    });
+
+    // Virar câmera (frente/trás)
+    let cameraAtual = 'user'; // começa com câmera frontal
+
+    document.getElementById('virarCamera').addEventListener('click', async () => {
+      try {
+        const stream = video.srcObject;
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        cameraAtual = cameraAtual === 'user' ? 'environment' : 'user';
+
+        const novaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: cameraAtual }
+        });
+
+        video.srcObject = novaStream;
+      } catch (err) {
+        alert("Erro ao virar câmera: " + err.message);
+      }
+    });
   </script>
+
+  <p style="margin-top: 30px; font-size: 14px; color: #555;">
+    Ao usar, você concorda em pedir autorização da pessoa na foto.<br>
+    Em caso de crise: <strong>188 (CVV)</strong> • <a href="https://cvv.org.br/" target="_blank" style="color: #d4af37; text-decoration: none;">cvv.org.br</a>
+  </p>
 </body>
 </html>
