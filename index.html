@@ -50,6 +50,30 @@
       background: url('moldura1.png') center/cover no-repeat;
     }
 
+    #botoes {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #FFD700;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #e6c200;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
     .instrucoes {
       margin: 25px auto;
       padding: 20px;
@@ -139,48 +163,6 @@
       display: none;
     }
 
-    #botoes-acao button {
-      background: #FF6B35; /* laranja vibrante pra destacar a ação principal */
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    #botoes-acao button:hover {
-      background: #e55a2b;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    #botoes-molduras {
-      margin-top: 25px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-      max-width: 100%;
-    }
-
-    #botoes-molduras button {
-      padding: 10px 16px;
-      background: #FFD700;
-      border: none;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 0.95rem;
-    }
-
-    #botoes-molduras button:hover {
-      background: #e6c200;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
     @media (max-width: 480px) {
       .instrucoes,
       .rodape {
@@ -195,12 +177,6 @@
       #placeholder {
         padding: 30px 15px;
         font-size: 1rem;
-      }
-
-      #camera-container {
-        width: 100%;
-        height: auto;
-        max-height: 400px;
       }
     }
   </style>
@@ -220,14 +196,9 @@
     <div id="moldura" class="moldura"></div>
   </div>
 
-  <!-- Botoes de ação: Tirar Foto + Virar Câmera -->
-  <div id="botoes-acao" style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-    <button id="capturar" style="padding: 12px 24px; font-size: 1.1rem;">📸 Tirar Foto</button>
-    <button id="virarCamera" style="padding: 12px 24px; font-size: 1.1rem;">📱↔️ Virar Câmera</button>
-  </div>
-
-  <!-- Molduras abaixo -->
-  <div id="botoes-molduras">
+  <div id="botoes">
+    <button id="capturar">📸 Tirar Foto</button>
+    <button id="virarCamera">📱↔️ Virar Câmera</button>
     <button data-moldura="Amarelo.png">💛 Girassol 1</button>
     <button data-moldura="Amarelo1.png">💛 Garfield</button>
     <button data-moldura="Amarelo2.png">💛 Bob Esponja</button>
@@ -236,6 +207,7 @@
     <button data-moldura="Amarelo5.png">💛 Os Simpsons</button>
     <button data-moldura="Amarelo6.png">💛 Emojis</button>
     <button data-moldura="Amarelo7.png">💛 Girassol 2</button>
+    
   </div>
 
   <canvas id="canvas" style="display:none;"></canvas>
@@ -243,7 +215,7 @@
   <!-- Preview com placeholder elegante -->
   <div id="preview-container">
     <img id="fotoFinal" src="" alt=""/>
-    <div id="placeholder">📸 Escolha sua moldura e clique em "Tirar Foto"!</div>
+    <div id="placeholder">📸 Olha como ficou!</div>
   </div>
 
   <button id="baixarFoto" style="display:none; margin-top:10px; padding:10px 20px; background:#FFD700; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
@@ -286,44 +258,20 @@
       });
     });
 
-    // ✅ CORREÇÃO PRINCIPAL: Capturar a foto COM A MOLDURA INTEIRA, IGUAL APARECE NA TELA
+    // Capturar a foto
     capturarBtn.addEventListener('click', () => {
       const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-      // Define o canvas com o mesmo tamanho da visualização (360x480)
-      const displayWidth = 360;
-      const displayHeight = 480;
-      canvas.width = displayWidth;
-      canvas.height = displayHeight;
+      // Desenhar o vídeo
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Calcula como desenhar o vídeo para preencher o canvas mantendo o corte visual
-      const videoRatio = video.videoWidth / video.videoHeight;
-      const canvasRatio = displayWidth / displayHeight;
-
-      let drawWidth, drawHeight, offsetX, offsetY;
-
-      if (videoRatio > canvasRatio) {
-        // Vídeo mais largo → corta laterais
-        drawHeight = displayHeight;
-        drawWidth = video.videoWidth * (displayHeight / video.videoHeight);
-        offsetX = -(drawWidth - displayWidth) / 2;
-        offsetY = 0;
-      } else {
-        // Vídeo mais alto → corta topo e base
-        drawWidth = displayWidth;
-        drawHeight = video.videoHeight * (displayWidth / video.videoWidth);
-        offsetX = 0;
-        offsetY = -(drawHeight - displayHeight) / 2;
-      }
-
-      // Desenha o vídeo com o mesmo corte que aparece na tela
-      ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight, 0, 0, displayWidth, displayHeight);
-
-      // Desenha a moldura por cima, redimensionada exatamente para o canvas
+      // Colocar a moldura
       const moldura = new Image();
       moldura.src = molduraAtual;
       moldura.onload = () => {
-        ctx.drawImage(moldura, 0, 0, displayWidth, displayHeight);
+        ctx.drawImage(moldura, 0, 0, canvas.width, canvas.height);
         fotoFinal.src = canvas.toDataURL('image/png');
         baixarBtn.style.display = 'block'; // Mostra botão de download
       };
