@@ -50,25 +50,57 @@
       background: url('moldura1.png') center/cover no-repeat;
     }
 
-    #botoes {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
+    /* Estilo para botão TIRAR FOTO — cor vibrante de ação */
+    #capturar {
+      padding: 12px 24px;
+      background: #FF6B35; /* laranja coral — chama atenção, ação principal! */
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
     }
 
-    button {
-      padding: 10px 20px;
-      background: #FFD700;
+    #capturar:hover {
+      background: #e55a2b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Estilo para botão VIRAR CÂMERA — cor suave de ajuste */
+    #virarCamera {
+      padding: 12px 24px;
+      background: #4A90E2; /* azul suave — tecnologia, ajuste, calma */
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+    }
+
+    #virarCamera:hover {
+      background: #3a7bc8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Mantém o estilo dos botões de MOLDURA como estavam */
+    button[data-moldura] {
+      padding: 10px 16px;
+      background: #FFD700; /* amarelo alegre, tema Setembro Amarelo 💛 */
       border: none;
       border-radius: 10px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
+      font-size: 0.95rem;
     }
 
-    button:hover {
+    button[data-moldura]:hover {
       background: #e6c200;
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
