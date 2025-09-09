@@ -243,7 +243,7 @@
   <!-- Preview com placeholder elegante -->
   <div id="preview-container">
     <img id="fotoFinal" src="" alt=""/>
-    <div id="placeholder">📸 Diga: AMARELO!!! </div>
+    <div id="placeholder">📸 Escolha sua moldura e clique em "Tirar Foto"!</div>
   </div>
 
   <button id="baixarFoto" style="display:none; margin-top:10px; padding:10px 20px; background:#FFD700; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
@@ -286,49 +286,48 @@
       });
     });
 
-   // Capturar a foto
-capturarBtn.addEventListener('click', () => {
-  const ctx = canvas.getContext('2d');
-  
-  // Define o tamanho do canvas IGUAL ao tamanho visível do vídeo na tela (360x480)
-  const displayWidth = 360;
-  const displayHeight = 480;
-  canvas.width = displayWidth;
-  canvas.height = displayHeight;
+    // ✅ CORREÇÃO PRINCIPAL: Capturar a foto COM A MOLDURA INTEIRA, IGUAL APARECE NA TELA
+    capturarBtn.addEventListener('click', () => {
+      const ctx = canvas.getContext('2d');
 
-  // Desenha o vídeo ESCALONADO para caber exatamente no canvas (mantendo proporção ou cortando)
-  // Calcula o aspect ratio do vídeo
-  const videoRatio = video.videoWidth / video.videoHeight;
-  const canvasRatio = displayWidth / displayHeight;
+      // Define o canvas com o mesmo tamanho da visualização (360x480)
+      const displayWidth = 360;
+      const displayHeight = 480;
+      canvas.width = displayWidth;
+      canvas.height = displayHeight;
 
-  let drawWidth, drawHeight, offsetX, offsetY;
+      // Calcula como desenhar o vídeo para preencher o canvas mantendo o corte visual
+      const videoRatio = video.videoWidth / video.videoHeight;
+      const canvasRatio = displayWidth / displayHeight;
 
-  if (videoRatio > canvasRatio) {
-    // Vídeo mais largo que o canvas → corta as laterais
-    drawHeight = displayHeight;
-    drawWidth = video.videoWidth * (displayHeight / video.videoHeight);
-    offsetX = -(drawWidth - displayWidth) / 2;
-    offsetY = 0;
-  } else {
-    // Vídeo mais alto que o canvas → corta o topo e a base
-    drawWidth = displayWidth;
-    drawHeight = video.videoHeight * (displayWidth / video.videoWidth);
-    offsetX = 0;
-    offsetY = -(drawHeight - displayHeight) / 2;
-  }
+      let drawWidth, drawHeight, offsetX, offsetY;
 
-  // Desenha o vídeo centralizado e cortado, igual aparece na tela
-  ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight, 0, 0, displayWidth, displayHeight);
+      if (videoRatio > canvasRatio) {
+        // Vídeo mais largo → corta laterais
+        drawHeight = displayHeight;
+        drawWidth = video.videoWidth * (displayHeight / video.videoHeight);
+        offsetX = -(drawWidth - displayWidth) / 2;
+        offsetY = 0;
+      } else {
+        // Vídeo mais alto → corta topo e base
+        drawWidth = displayWidth;
+        drawHeight = video.videoHeight * (displayWidth / video.videoWidth);
+        offsetX = 0;
+        offsetY = -(drawHeight - displayHeight) / 2;
+      }
 
-  // Coloca a moldura por cima, redimensionada exatamente para o canvas
-  const moldura = new Image();
-  moldura.src = molduraAtual;
-  moldura.onload = () => {
-    ctx.drawImage(moldura, 0, 0, displayWidth, displayHeight); // cobre todo o canvas
-    fotoFinal.src = canvas.toDataURL('image/png');
-    baixarBtn.style.display = 'block'; // Mostra botão de download
-  };
-});
+      // Desenha o vídeo com o mesmo corte que aparece na tela
+      ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight, 0, 0, displayWidth, displayHeight);
+
+      // Desenha a moldura por cima, redimensionada exatamente para o canvas
+      const moldura = new Image();
+      moldura.src = molduraAtual;
+      moldura.onload = () => {
+        ctx.drawImage(moldura, 0, 0, displayWidth, displayHeight);
+        fotoFinal.src = canvas.toDataURL('image/png');
+        baixarBtn.style.display = 'block'; // Mostra botão de download
+      };
+    });
 
     // Botão de download
     baixarBtn.addEventListener('click', () => {
@@ -362,5 +361,3 @@ capturarBtn.addEventListener('click', () => {
   </script>
 </body>
 </html>
-
-
