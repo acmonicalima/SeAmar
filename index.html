@@ -50,59 +50,35 @@
       background: url('moldura1.png') center/cover no-repeat;
     }
 
-    #botoes {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    button {
-      padding: 10px 20px;
-      background: #FFD700;
-      border: none;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background: #e6c200;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    #fotoFinal {
-      margin-top: 20px;
-      max-width: 360px;
-      border: 3px solid #FFD700;
-      border-radius: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
     .instrucoes {
       margin: 25px auto;
-      padding: 15px;
-      max-width: 500px;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 15px;
-      font-size: 16px;
+      padding: 20px;
+      max-width: 90%;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 18px;
+      font-size: 1.1rem;
       color: #333;
-      line-height: 1.6;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      line-height: 1.8;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-weight: 500;
+    }
+
+    .instrucoes p {
+      margin: 8px 0;
     }
 
     .rodape {
       margin-top: 40px;
-      padding: 20px;
+      padding: 25px 20px;
       width: 100%;
+      max-width: 90%;
       background: linear-gradient(135deg, #ffd700, #ffeb8e);
-      border-radius: 15px;
-      font-size: 14px;
-      color: #555;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      border-radius: 18px;
+      font-size: 1rem;
+      color: #444;
+      box-shadow: 0 -3px 12px rgba(0,0,0,0.12);
+      line-height: 1.7;
     }
 
     .rodape a {
@@ -120,6 +96,112 @@
     .destaque {
       color: #d4af37;
       font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    #preview-container {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+      margin-top: 20px;
+    }
+
+    #fotoFinal {
+      width: 100%;
+      max-width: 360px;
+      border: 3px solid #FFD700;
+      border-radius: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: none; /* Escondido até ter foto */
+    }
+
+    #placeholder {
+      width: 100%;
+      max-width: 360px;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 3px dashed #FFD700;
+      border-radius: 20px;
+      font-size: 1.1rem;
+      color: #888;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    /* Quando a foto for exibida, esconde o placeholder */
+    #fotoFinal[src]:not([src=""]) {
+      display: block;
+    }
+
+    #fotoFinal[src]:not([src=""]) ~ #placeholder {
+      display: none;
+    }
+
+    #botoes-acao button {
+      background: #FF6B35; /* laranja vibrante pra destacar a ação principal */
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #botoes-acao button:hover {
+      background: #e55a2b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    #botoes-molduras {
+      margin-top: 25px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    #botoes-molduras button {
+      padding: 10px 16px;
+      background: #FFD700;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+
+    #botoes-molduras button:hover {
+      background: #e6c200;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 480px) {
+      .instrucoes,
+      .rodape {
+        padding: 18px 15px;
+        font-size: 1rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      #placeholder {
+        padding: 30px 15px;
+        font-size: 1rem;
+      }
+
+      #camera-container {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+      }
     }
   </style>
 </head>
@@ -128,9 +210,9 @@
   <p style="font-size: 1.2rem; color: #555; margin-bottom: 5px;">CIEP 183 João Vitta</p>
 
   <div class="instrucoes">
-    🌻 Escolha sua moldura favorita clicando nos botões abaixo.<br>
-    📸 Clique em <strong>"Tirar Foto"</strong> quando estiver pronto(a).<br>
-    ⬇️ Gostou do resultado? Clique em <strong>"Baixar Foto"</strong> para salvar!
+    <p>🌻 Escolha sua moldura favorita clicando nos botões abaixo.</p>
+    <p>📸 Clique em <strong>"Tirar Foto"</strong> quando estiver pronto(a).</p>
+    <p>✅ Gostou do resultado? Clique em <strong>"Baixar Foto"</strong> para salvar!</p>
   </div>
 
   <div id="camera-container">
@@ -138,7 +220,14 @@
     <div id="moldura" class="moldura"></div>
   </div>
 
-  <div id="botoes">
+  <!-- Botoes de ação: Tirar Foto + Virar Câmera -->
+  <div id="botoes-acao" style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+    <button id="capturar" style="padding: 12px 24px; font-size: 1.1rem;">📸 Tirar Foto</button>
+    <button id="virarCamera" style="padding: 12px 24px; font-size: 1.1rem;">📱↔️ Virar Câmera</button>
+  </div>
+
+  <!-- Molduras abaixo -->
+  <div id="botoes-molduras">
     <button data-moldura="Amarelo.png">💛 Girassol 1</button>
     <button data-moldura="Amarelo1.png">💛 Garfield</button>
     <button data-moldura="Amarelo2.png">💛 Bob Esponja</button>
@@ -147,23 +236,25 @@
     <button data-moldura="Amarelo5.png">💛 Os Simpsons</button>
     <button data-moldura="Amarelo6.png">💛 Emojis</button>
     <button data-moldura="Amarelo7.png">💛 Girassol 2</button>
-    <button id="capturar">📸 Tirar Foto</button>
-    <button id="virarCamera">📱↔️ Virar Câmera</button>
   </div>
 
   <canvas id="canvas" style="display:none;"></canvas>
-  <img id="fotoFinal" alt="📸 Escolha sua moldura, clique em 'Tirar Foto'! Gostou? Então é só baixar!"/>
+
+  <!-- Preview com placeholder elegante -->
+  <div id="preview-container">
+    <img id="fotoFinal" src="" alt=""/>
+    <div id="placeholder">📸 Escolha sua moldura e clique em "Tirar Foto"!</div>
+  </div>
+
   <button id="baixarFoto" style="display:none; margin-top:10px; padding:10px 20px; background:#FFD700; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
     ⬇️ Baixar Foto
   </button>
 
   <div class="rodape">
-    <p>
-      Ao usar, você autoriza o uso da imagem sem fins lucrativos.<br>
-      💛 <strong>Você não está sozinho(a).</strong> Se precisar conversar, o CVV está aqui para te ouvir, 24h por dia:<br>
-      <span class="destaque">Ligue 188</span> • Visite: <a href="https://cvv.org.br/" target="_blank">cvv.org.br</a><br>
-      <em>Centro de Valorização da Vida — Formado por voluntários, atendimento gratuito e sigiloso.</em>
-    </p>
+    <p>Ao usar, você autoriza o uso da imagem sem fins lucrativos.</p>
+    <p>💛 <strong>Você não está sozinho(a).</strong> Se precisar conversar, o CVV está aqui para te ouvir, 24h por dia:</p>
+    <p><span class="destaque">Ligue 188</span> • Visite: <a href="https://cvv.org.br/" target="_blank">cvv.org.br</a></p>
+    <p><em>Centro de Valorização da Vida — Formado por voluntários, atendimento gratuito e sigiloso.</em></p>
   </div>
 
   <script>
@@ -173,6 +264,8 @@
     const capturarBtn = document.getElementById('capturar');
     const molduraDiv = document.getElementById('moldura');
     const baixarBtn = document.getElementById('baixarFoto');
+
+    fotoFinal.src = ""; // Garante que começa vazio
 
     let molduraAtual = 'Amarelo.png';
 
